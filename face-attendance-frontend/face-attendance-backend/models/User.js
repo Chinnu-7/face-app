@@ -16,8 +16,20 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['student', 'teacher', 'admin'],
+        enum: ['student', 'teacher', 'admin', 'employee'],
         default: 'student',
+    },
+    department: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department',
+    },
+    employeeId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    phoneNumber: {
+        type: String,
     },
     faceDescriptor: {
         type: [Number], // Array of 128 floats

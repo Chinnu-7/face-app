@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
 
     console.log('Register request received:', req.body.email);
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, department, employeeId, phoneNumber } = req.body;
 
         // Check if user exists
         let user = await User.findOne({ email });
@@ -49,11 +49,14 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         user = new User({
-            name,
-            email,
+            name: name,
+            email: email,
             password: hashedPassword,
-            role,
-            faceDescriptor
+            role: role,
+            department: department || undefined,
+            employeeId: employeeId || undefined,
+            phoneNumber: phoneNumber || undefined,
+            faceDescriptor: faceDescriptor
         });
 
         await user.save();

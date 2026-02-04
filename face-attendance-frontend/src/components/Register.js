@@ -10,11 +10,27 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('student');
+    const [department, setDepartment] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [departments, setDepartments] = useState([]);
     const [consent, setConsent] = useState(false);
     const [liveness, setLiveness] = useState(false); // Mock liveness state
     const [loading, setLoading] = useState(false);
     const webcamRef = useRef(null);
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const res = await api.get('/departments');
+                setDepartments(res.data);
+            } catch (err) {
+                console.error('Failed to fetch departments', err);
+            }
+        };
+        fetchDepartments();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,6 +47,9 @@ const Register = () => {
         formData.append('email', email);
         formData.append('password', password);
         formData.append('role', role);
+        formData.append('department', department);
+        formData.append('employeeId', employeeId);
+        formData.append('phoneNumber', phoneNumber);
         formData.append('image', blob, 'face.jpg');
 
         try {
@@ -77,7 +96,20 @@ const Register = () => {
                         <select value={role} onChange={e => setRole(e.target.value)} className="input-field w-full p-3 rounded-xl appearance-none">
                             <option value="student">Student</option>
                             <option value="teacher">Teacher</option>
+                            <option value="employee">Employee</option>
                         </select>
+                        <select value={department} onChange={e => setDepartment(e.target.value)} className="input-field w-full p-3 rounded-xl appearance-none">
+                            <option value="">Select Department</option>
+                            {departments.map(dept => (
+                                <option key={dept._id} value={dept._id}>{dept.name}</option>
+                            ))}
+                        </select>
+                        <div className="relative">
+                            <input type="text" placeholder="Employee ID (Optional)" value={employeeId} onChange={e => setEmployeeId(e.target.value)} className="input-field w-full p-3 rounded-xl" />
+                        </div>
+                        <div className="relative">
+                            <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="input-field w-full p-3 rounded-xl" />
+                        </div>
 
                         <div className="flex items-center gap-2 text-sm text-slate-400 p-2">
                             <input

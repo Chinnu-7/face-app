@@ -23,6 +23,9 @@ const AttendanceSchema = new mongoose.Schema({
         enum: ['Present', 'Late', 'Absent'],
         default: 'Present',
     },
+    photoProof: {
+        type: String, // Base64 encoded image or URL
+    },
 }, { timestamps: true });
 
 AttendanceSchema.index({ user: 1, date: -1 });

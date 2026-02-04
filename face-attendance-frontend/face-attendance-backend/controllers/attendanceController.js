@@ -82,7 +82,8 @@ exports.markAttendance = async (req, res) => {
             date: today,
             time: timeString,
             location: JSON.parse(location || '{}'),
-            status
+            status,
+            photoProof: req.file ? req.file.buffer.toString('base64') : undefined
         });
 
         await attendance.save();
