@@ -101,7 +101,7 @@ const Register = () => {
                         <select value={department} onChange={e => setDepartment(e.target.value)} className="input-field w-full p-3 rounded-xl appearance-none">
                             <option value="">Select Department</option>
                             {departments.map(dept => (
-                                <option key={dept._id} value={dept._id}>{dept.name}</option>
+                                <option key={dept.id} value={dept.id}>{dept.name}</option>
                             ))}
                         </select>
                         <div className="relative">

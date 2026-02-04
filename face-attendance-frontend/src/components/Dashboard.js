@@ -83,7 +83,7 @@ const Dashboard = () => {
                         <tbody className="divide-y divide-slate-800">
                             {history.length > 0 ? history.map((record, i) => (
                                 <motion.tr
-                                    key={record._id}
+                                    key={record.id}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: i * 0.05 }}
@@ -103,8 +103,8 @@ const Dashboard = () => {
                                     </td>
                                     <td className="p-4 text-right">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold leading-none ${record.status === 'Late'
-                                                ? 'bg-red-500/10 text-red-500 border border-red-500/20'
-                                                : 'bg-green-500/10 text-green-500 border border-green-500/20'
+                                            ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                            : 'bg-green-500/10 text-green-500 border border-green-500/20'
                                             }`}>
                                             {record.status}
                                         </span>
