@@ -1,34 +1,36 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const AttendanceSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+const Attendance = sequelize.define('Attendance', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
     },
     date: {
-        type: String, // Format: YYYY-MM-DD
-        required: true,
+        type: DataTypes.STRING, // Format: YYYY-MM-DD
+        allowNull: false,
     },
     time: {
-        type: String, // Format: HH:mm:ss
-        required: true,
+        type: DataTypes.STRING, // Format: HH:mm:ss
+        allowNull: false,
     },
     location: {
-        lat: Number,
-        lng: Number,
+        type: DataTypes.JSON, // { lat, lng }
     },
     status: {
-        type: String,
-        enum: ['Present', 'Late', 'Absent'],
-        default: 'Present',
+        type: DataTypes.ENUM('Present', 'Late', 'Absent'),
+        defaultValue: 'Present',
     },
     photoProof: {
-        type: String, // Base64 encoded image or URL
-    },
-}, { timestamps: true });
+        type: DataTypes.TEXT('long'), // For Base64 encoded image
+    }
+}, {
+    timestamps: true,
+    indexes: [
+        { fields: ['date'] },
+        { fields: ['status'] }
+    ]
+});
 
-AttendanceSchema.index({ user: 1, date: -1 });
-AttendanceSchema.index({ status: 1 });
-
-module.exports = mongoose.model('Attendance', AttendanceSchema);
+module.exports = Attendance;

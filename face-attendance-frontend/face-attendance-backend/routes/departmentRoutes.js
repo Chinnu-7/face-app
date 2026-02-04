@@ -7,7 +7,7 @@ const Department = require('../models/Department');
 // @access  Public
 router.get('/', async (req, res) => {
     try {
-        const departments = await Department.find().sort({ name: 1 });
+        const departments = await Department.findAll({ order: [['name', 'ASC']] });
         res.json(departments);
     } catch (err) {
         console.error(err.message);

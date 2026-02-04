@@ -14,52 +14,42 @@ exports.register = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    console.log('Register request received:', req.body.email);
     try {
         const { name, email, password, role, department, employeeId, phoneNumber } = req.body;
 
         // Check if user exists
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ where: { email } });
         if (user) {
-            console.log('User already exists:', email);
             return res.status(400).json({ msg: 'User already exists' });
         }
 
-        console.log('Processing face image...');
         // Process Face Image if uploaded
-        let faceDescriptor = [];
+        let faceDescriptor = null;
         if (req.file) {
-            console.log('File received, buffer size:', req.file.buffer.length);
             const img = await faceapi.bufferToImage(req.file.buffer);
             const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
 
             if (detections) {
-                console.log('Face detected successfully');
                 faceDescriptor = Array.from(detections.descriptor);
             } else {
-                console.log('No face detected in image');
                 return res.status(400).json({ msg: 'No face detected in the image' });
             }
-        } else {
-            console.log('No file uploaded in register request');
         }
 
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = new User({
-            name: name,
-            email: email,
+        user = await User.create({
+            name,
+            email,
             password: hashedPassword,
-            role: role,
-            department: department || undefined,
-            employeeId: employeeId || undefined,
-            phoneNumber: phoneNumber || undefined,
-            faceDescriptor: faceDescriptor
+            role,
+            departmentId: department || null,
+            employeeId: employeeId || null,
+            phoneNumber: phoneNumber || null,
+            faceDescriptor
         });
-
-        await user.save();
 
         // Create Token
         const payload = {
@@ -89,7 +79,7 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ where: { email } });
         if (!user) {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }

@@ -1,18 +1,23 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const DepartmentSchema = new mongoose.Schema({
+const Department = sequelize.define('Department', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    },
     name: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false,
         unique: true,
     },
     description: {
-        type: String,
-    },
-    manager: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: DataTypes.STRING,
     }
-}, { timestamps: true });
+    // manager will be added via association
+}, {
+    timestamps: true
+});
 
-module.exports = mongoose.model('Department', DepartmentSchema);
+module.exports = Department;

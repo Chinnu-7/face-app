@@ -3,16 +3,17 @@ const User = require('../models/User');
 const faceapi = require('face-api.js');
 const geolib = require('geolib');
 const { Canvas, Image, ImageData } = require('canvas');
+const { Op } = require('sequelize');
 
 // Monkey patch face-api env
 faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
 exports.markAttendance = async (req, res) => {
     try {
-        const { location } = req.body; // location = { lat, lng }
+        const { location } = req.body;
         const userLoc = JSON.parse(location || '{}');
 
-        // 1. Geofencing Check (e.g., 500 meters from office center)
+        // Geofencing Check
         const officeCenter = { latitude: 17.3850, longitude: 78.4867 };
         if (userLoc.lat && userLoc.lng) {
             const distance = geolib.getDistance(
@@ -30,7 +31,7 @@ exports.markAttendance = async (req, res) => {
             return res.status(400).json({ msg: 'No image uploaded' });
         }
 
-        // Detect Face from Upload
+        // Detect Face
         const img = await faceapi.bufferToImage(req.file.buffer);
         const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
 
@@ -40,11 +41,19 @@ exports.markAttendance = async (req, res) => {
 
         const uploadedDescriptor = detections.descriptor;
 
-        // Fetch all users with descriptors
-        const users = await User.find({ faceDescriptor: { $exists: true, $not: { $size: 0 } } });
+        // Fetch all users with descriptors (Note: faceDescriptor is stored as JSON which is retrieved as an object/array in Sequelize)
+        const users = await User.findAll({
+            where: {
+                faceDescriptor: { [Op.ne]: null }
+            }
+        });
 
         let bestMatch = null;
-        let minDistance = 0.6; // Threshold
+        let minDistance = 0.6;
+
+        if (users.length === 0) {
+            return res.status(400).json({ msg: 'No registered face data found' });
+        }
 
         const faceMatcher = new faceapi.FaceMatcher(users.map(u =>
             new faceapi.LabeledFaceDescriptors(u.id.toString(), [new Float32Array(u.faceDescriptor)])
@@ -56,48 +65,51 @@ exports.markAttendance = async (req, res) => {
             return res.status(400).json({ msg: 'Face not recognized' });
         }
 
-        // Found User
         const userId = match.label;
-
-        // Check if already marked for today
         const today = new Date().toISOString().split('T')[0];
-        const existing = await Attendance.findOne({ user: userId, date: today });
+
+        const existing = await Attendance.findOne({
+            where: {
+                userId,
+                date: today
+            }
+        });
 
         if (existing) {
             return res.status(400).json({ msg: 'Attendance already marked for today' });
         }
 
-        // Mark Attendance
         const now = new Date();
         const timeString = now.toTimeString().split(' ')[0];
 
-        // Simple Lat/Long Logic (10am)
         let status = 'Present';
         if (now.getHours() >= 10 && now.getMinutes() > 0) {
             status = 'Late';
         }
 
-        const attendance = new Attendance({
-            user: userId,
+        await Attendance.create({
+            userId,
             date: today,
             time: timeString,
-            location: JSON.parse(location || '{}'),
+            location: userLoc,
             status,
-            photoProof: req.file ? req.file.buffer.toString('base64') : undefined
+            photoProof: req.file.buffer.toString('base64')
         });
 
-        await attendance.save();
         res.json({ msg: 'Attendance marked', status, user: userId });
 
     } catch (err) {
-        console.error(err.message);
+        console.error(err);
         res.status(500).send('Server error');
     }
 };
 
 exports.getHistory = async (req, res) => {
     try {
-        const attendance = await Attendance.find({ user: req.user.id }).sort({ date: -1 });
+        const attendance = await Attendance.findAll({
+            where: { userId: req.user.id },
+            order: [['date', 'DESC']]
+        });
         res.json(attendance);
     } catch (err) {
         console.error(err.message);

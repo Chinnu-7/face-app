@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -8,11 +7,15 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const faceapi = require('face-api.js');
 const { Canvas, Image, ImageData } = require('canvas');
-
 const morgan = require('morgan');
 
-// Initialize App
-const app = express();
+const sequelize = require('./config/database');
+const { User, Attendance, Department } = require('./models');
+
+// Connect to MySQL
+sequelize.sync({ alter: true })
+    .then(() => console.log('MySQL Connected & Synchronized'))
+    .catch(err => console.error('MySQL Connection Error:', err));
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -32,12 +35,6 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
-
-// Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/face-attendance-db';
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Load Face API Models
 const runFaceApi = async () => {

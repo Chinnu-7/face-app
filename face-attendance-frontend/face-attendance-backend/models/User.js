@@ -1,47 +1,49 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const UserSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    },
     name: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     email: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false,
         unique: true,
+        validate: {
+            isEmail: true,
+        }
     },
     password: {
-        type: String,
-        required: true,
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     role: {
-        type: String,
-        enum: ['student', 'teacher', 'admin', 'employee'],
-        default: 'student',
-    },
-    department: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Department',
+        type: DataTypes.ENUM('student', 'teacher', 'admin', 'employee'),
+        defaultValue: 'student',
     },
     employeeId: {
-        type: String,
+        type: DataTypes.STRING,
         unique: true,
-        sparse: true,
     },
     phoneNumber: {
-        type: String,
+        type: DataTypes.STRING,
     },
     faceDescriptor: {
-        type: [Number], // Array of 128 floats
-        required: false,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
+        type: DataTypes.JSON, // Use JSON for array of numbers
+        allowNull: true,
+    }
+}, {
+    timestamps: true,
+    indexes: [
+        { unique: true, fields: ['email'] },
+        { fields: ['role'] }
+    ]
 });
 
-UserSchema.index({ email: 1 });
-UserSchema.index({ role: 1 });
-
-module.exports = mongoose.model('User', UserSchema);
+module.exports = User;
